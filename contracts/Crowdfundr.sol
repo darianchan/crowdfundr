@@ -40,6 +40,7 @@ contract Campaign is ERC721 {
     }
 
     function contribute() public payable before30days {
+        require(cancelled == false, "campaign has been cancelled, cannot contribute anymore to this campaign");
         require(!reachedGoal, "campaign goal reached");
         require(msg.value >= .01 ether, "contribution too low. Please send at least .01 eth");
         
@@ -60,8 +61,7 @@ contract Campaign is ERC721 {
         }
     }
 
-    // should just send everything back instead of letting owner do a specific amount
-    function withdraw(uint _amount) public payable onlyOwner {
+    function withdraw(uint _amount) public onlyOwner {
         require(reachedGoal || cancelled , "campaign still active or goal not reached");
         require(_amount <= totalAmountContributed, "withdraw amount too high");
         totalAmountContributed -= _amount * 1 ether;
