@@ -51,24 +51,39 @@ describe("Crowdfundr contract", () => {
 
       await expect(campaign.connect(accounts[1]).contribute({value: ethers.utils.parseEther('1')})).to.be.reverted;
     })
+
+    it('should revert if a user tried to contribute after the campaign has been cancelled', async() => {
+      await campaign.cancelCampaign();
+      await expect(campaign.connect(accounts[1]).contribute({value: ethers.utils.parseEther('2')})).to.be.reverted;
+    })
   })
 
-  describe("withdraw", async() => {
+  describe("withdraw", () => {
     it('should allow creator to withdraw funds if goal is reached', async() => {
       await campaign.connect(accounts[1]).contribute({value: ethers.utils.parseEther('2')}); // goal is now reached
       await campaign.withdraw(2);
       let campaignBalance = BigNumber.from(await campaign.totalAmountContributed()).toNumber();
       expect(campaignBalance).to.eq(0);
     })
+
+    it('should allow creator to withdraw funds if campaign is cancelled', async() => {
+      await campaign.connect(accounts[1]).contribute({value: ethers.utils.parseEther('2')});
+      await campaign.cancelCampaign();
+      await campaign.withdraw(2);
+      let campaignBalance = BigNumber.from(await campaign.totalAmountContributed()).toNumber();
+      expect(campaignBalance).to.eq(0);
+    })
+
+    it('should revert if creator tried to withdraw an amount more than what the campaign has raised', async() => {
+      await campaign.connect(accounts[1]).contribute({value: ethers.utils.parseEther('2')});
+      await expect(campaign.withdraw(3)).to.be.reverted;
+    })
   })
   
-
-  // cancel function
-  it('should allow owner to cancel the campaign', async() => {
-    await campaign.cancelCampaign()
-    expect(await campaign.cancelled()).to.be.true
+  describe("cancel", () => {
+    it('should allow creator to cancel the campaign', async() => {
+      await campaign.cancelCampaign()
+      expect(await campaign.cancelled()).to.be.true
+    })
   })
-
-
-
 })
